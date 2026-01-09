@@ -68,4 +68,13 @@ public interface TincNetworkMangeMapper
      * @return 操作结果（影响行数）
      */
     public int deleteTincNetworkMangeByIds(Long[] ids);
+    /**
+     * 校验端口唯一性
+     */
+    public int checkPortUnique(String port);
+
+    /**
+     * 校验网段唯一性
+     */
+    public int checkSegmentUnique(String segment);
 }

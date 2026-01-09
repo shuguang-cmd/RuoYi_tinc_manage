@@ -3,6 +3,7 @@ package com.ruoyi.node_manage.service.impl;
 import java.util.List;
 import com.ruoyi.common.utils.DateUtils;
 import com.ruoyi.common.utils.ShellUtils; // 1. 引入 ShellUtils
+import com.ruoyi.common.utils.TincConfigUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // 2. 引入事务注解
@@ -49,36 +50,44 @@ public class TincNodeMangeServiceImpl implements ITincNodeMangeService
      * @return 结果
      */
     @Override
-    @Transactional(rollbackFor = Exception.class) // 3. 开启事务：任何异常都会导致数据库回滚
+    @Transactional(rollbackFor = Exception.class)
     public int insertTincNodeMange(TincNodeMange tincNodeMange)
     {
-        // 1. 设置基础数据
+        // 1. 基础数据入库
         tincNodeMange.setCreateTime(DateUtils.getNowDate());
-
-        // 2. 先入库 (确保数据格式正确，并且获取到自增ID)
         int rows = tincNodeMangeMapper.insertTincNodeMange(tincNodeMange);
 
-        // 3. 执行 Linux 核心逻辑
+        // =================================================================
+        // 2. 核心：生成 Tinc 配置文件 (开始)
+        // =================================================================
         try {
-            // 获取必要的参数 (假设实体类里有这些字段，你需要根据实际情况调整 getter 方法)
-            String nodeName = tincNodeMange.getNodeName(); // 节点名
-            // String netName = ...; // 如果前端只传了 netId，你需要先查询出 netName
+            // 从实体类获取必要参数
+            String netName = tincNodeMange.getNetworkName(); // 例如 "home_vpn"
+            String nodeName = tincNodeMange.getNodeName();   // 例如 "notebook"
+            String serverName = tincNodeMange.getServerName(); // 例如 "aliyun" (ConnectTo 的目标)
+            String ip = tincNodeMange.getnetworkIp();        // 例如 "192.172.1.2/32"
 
-            // --- 构造命令 ---
-            // 这是一个示例命令，你需要替换成你真实的 Tinc 命令
-            // 例如: "tinc -n [netName] generate-keys [nodeName]"
-            // 这里我们先用 echo 测试一下流程是否通畅
-            String command = String.format("echo 'Creating Tinc Node: %s' >> /tmp/tinc_debug.log", nodeName);
+            // A. 生成 tinc.conf
+            // 对应截图：D:\tinc\home_vpn\tinc.conf
+            TincConfigUtils.createTincConf(netName, nodeName, serverName);
 
-            // 4. 调用 ShellUtils
-            // 如果命令执行失败 (exit code != 0) 或者超时，这里会抛出异常
-            ShellUtils.runCommand(command);
+            // B. 生成 hosts 文件
+            // 对应截图：D:\tinc\home_vpn\hosts\notebook
+            // 暂时给一个假的公钥用于测试，后续我们会用 Shell 生成真的
+            String mockPublicKey = "MIIBCgKCAQEAw...";
+            TincConfigUtils.createHostFile(netName, nodeName, ip, mockPublicKey);
+
+            // C. 执行 Shell 命令 (可选)
+            // ShellUtils.runCommand("tincd -n " + netName + " -K");
 
         } catch (Exception e) {
-            // 5. 异常捕获与回滚
-            // 如果 Shell 失败了，我们需要抛出 RuntimeException，这样上面的 @Transactional 就会自动把数据库里刚插的那条记录删掉
-            throw new RuntimeException("Tinc 系统底层执行失败: " + e.getMessage());
+            e.printStackTrace();
+            // 抛出异常，触发事务回滚 (数据库里刚才插的记录会被删掉)
+            throw new RuntimeException("Tinc 文件生成失败，操作已回滚");
         }
+        // =================================================================
+        // 核心逻辑结束
+        // =================================================================
 
         return rows;
     }

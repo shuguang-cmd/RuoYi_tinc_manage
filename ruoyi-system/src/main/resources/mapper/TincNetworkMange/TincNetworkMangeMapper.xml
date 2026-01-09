@@ -90,4 +90,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{id}
         </foreach>
     </delete>
+
+    <select id="checkPortUnique" parameterType="String" resultType="int">
+        select count(1) from tinc_network_mange where port = #{port}
+    </select>
+
+    <select id="checkSegmentUnique" parameterType="String" resultType="int">
+        select count(1) from tinc_network_mange where segment = #{segment}
+    </select>
 </mapper>
