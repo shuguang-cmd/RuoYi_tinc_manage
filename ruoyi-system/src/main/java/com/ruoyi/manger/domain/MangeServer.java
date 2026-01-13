@@ -27,17 +27,17 @@ public class MangeServer extends BaseEntity
 
     /** 服务器ip */
     @Excel(name = "服务器ip")
-    @Pattern(regexp = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$", message = "服务器ip格式不正确，应为xxx.xxx.xxx.xxx")    
+    @Pattern(regexp = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){3}(25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)$", message = "服务器ip格式不正确，应为xxx.xxx.xxx.xxx")
     private String serverIp;
     
     /** 起始网段 */
     @Excel(name = "起始网段")
-    @Pattern(regexp = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){0,2}(25[0-5]|2[0-4]\\d|[01]?\\d\\d?)$", message = "起始网段格式不正确，应为xxx.xxx.xxx,xxx.xxx或者xxx")
+    @Pattern(regexp = "^((25[0-5]|2[0-4]\\d|[01]?\\d\\d?)\\.){0,2}(25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)$", message = "起始网段格式不正确，应为xxx.xxx.xxx或xxx.xxx")
     private String startInterat;
 
     /** 终止网段 */
     @Excel(name = "终止网段")
-    @Pattern(regexp= "^((25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)\\.){0,2}(25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)$", message = "终止网段格式不正确，应为xxx.xxx.xxx,xxx.xxx或者xxx")
+    @Pattern(regexp= "^((25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)\\.){0,2}(25[0-5]|2[0-4]\\d|[0-1]?\\d\\d?)$", message = "终止网段格式不正确，应为xxx.xxx.xxx或xxx.xxx")
     private String endInterat;
 
     /** 起始端口 */

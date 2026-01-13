@@ -83,7 +83,8 @@ public class TincNetworkMangeServiceImpl implements ITincNetworkMangeService
 
             // B. 生成服务端 Host 文件 (填入真实的 publicKey)
             // 注意：这里需要把生成的公钥传进去
-            TincConfigUtils.createHostFile(netName, "server_master", network.getSegment(), "", publicKey);
+            String Segment = network.getSegment()+".1/32"; //(xxx.xxx.xxx.xxx/32)
+            TincConfigUtils.createHostFile(netName, "server_master", Segment, "", publicKey);
 
             // C. 保存私钥到本地 (rsa_key.priv)
             // 我们需要在 TincConfigUtils 里补一个生成私钥的方法，或者直接在这里写

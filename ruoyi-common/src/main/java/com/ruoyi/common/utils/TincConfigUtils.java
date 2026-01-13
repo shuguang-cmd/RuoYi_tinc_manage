@@ -98,4 +98,39 @@ public class TincConfigUtils {
             throw new RuntimeException("生成配置失败: " + e.getMessage());
         }
     }
+
+    // ==========================================
+    // 新增：读取文件功能 (为了获取 Server 的公钥)
+    // ==========================================
+
+    /**
+     * 读取指定节点的 hosts 文件内容
+     * @param netName 内网名称
+     * @param nodeName 节点名称 (例如 server_master)
+     * @return 文件内容字符串
+     */
+    public static String readHostFile(String netName, String nodeName) {
+        String fullPath = BASE_PATH + "/" + netName + "/hosts/" + nodeName;
+        File file = new File(fullPath);
+
+        if (!file.exists()) {
+            log.error("文件不存在: {}", fullPath);
+            throw new RuntimeException("找不到服务器公钥文件，请检查是否已初始化服务端！");
+        }
+
+        try {
+            // 简单暴力的读取方式 (Java 7+)
+            return new String(java.nio.file.Files.readAllBytes(file.toPath()));
+        } catch (IOException e) {
+            log.error("读取文件失败: {}", fullPath, e);
+            throw new RuntimeException("读取配置文件失败");
+        }
+    }
+
+    /**
+     * 获取基础路径 (给 Zip 工具用)
+     */
+    public static String getBasePath() {
+        return BASE_PATH;
+    }
 }

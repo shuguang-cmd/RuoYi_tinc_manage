@@ -20,6 +20,10 @@ import com.ruoyi.node_manage.domain.TincNodeMange;
 import com.ruoyi.node_manage.service.ITincNodeMangeService;
 import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.utils.file.FileUtils;
+import com.ruoyi.common.utils.TincConfigUtils;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Tinc节点集群管理Controller
@@ -100,5 +104,40 @@ public class TincNodeMangeController extends BaseController
     public AjaxResult remove(@PathVariable Long[] ids)
     {
         return toAjax(tincNodeMangeService.deleteTincNodeMangeByIds(ids));
+    }
+
+    /**
+     * 下载客户端安装包
+     */
+    @PreAuthorize("@ss.hasPermi('node_manage:node_manage:export')") // 权限字符先借用 export 的
+    @PostMapping("/download/{id}")
+    public void download(@PathVariable("id") Long id, HttpServletResponse response) throws IOException
+    {
+        // 1. 查数据库，获取节点信息
+        TincNodeMange node = tincNodeMangeService.selectTincNodeMangeById(id);
+        if (node == null) {
+            throw new RuntimeException("节点不存在");
+        }
+
+        // 2. 拼接文件名 (必须和 Service 里的打包逻辑一致！)
+        // 格式：netName_nodeName.zip
+        String fileName = node.getNetworkName() + "_" + node.getNodeName() + ".zip";
+
+        // 3. 拼接绝对路径
+        // D:/tinc/zips/segment_sun666.zip
+        String filePath = TincConfigUtils.getBasePath() + "/zips/" + fileName;
+
+        // 4. 检查文件是否存在
+        File file = new File(filePath);
+        if (!file.exists()) {
+            throw new RuntimeException("安装包文件不存在，请尝试删除节点后重新创建");
+        }
+
+        // 5. 设置响应头 (告诉浏览器这是一个要下载的文件)
+        response.setContentType("application/octet-stream");
+        FileUtils.setAttachmentResponseHeader(response, fileName); // 若依自带的文件头设置工具
+
+        // 6. 开始写出数据流
+        FileUtils.writeBytes(filePath, response.getOutputStream());
     }
 }

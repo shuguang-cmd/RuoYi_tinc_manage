@@ -122,6 +122,13 @@
           <el-button
             size="mini"
             type="text"
+            icon="el-icon-download"
+            @click="handleDownload(scope.row)"
+           v-hasPermi="['node_mange:node_mange:export']"
+          >下载配置</el-button>
+          <el-button
+            size="mini"
+            type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
             v-hasPermi="['node_mange:node_mange:edit']"
@@ -496,6 +503,21 @@ export default {
         console.warn('4. 该内网数据的 segment 字段为空，无法自动填充');
         // 如果没有网段，也可以考虑清空或者保留原值，这里暂时不做操作
       }
+    },
+   /** 下载按钮操作 */
+    handleDownload(row) {
+      const id = row.id; 
+      this.$confirm('是否确认下载节点 "' + row.nodeName + '" 的安装包?', "警告", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        }).then(() => {
+          // --- 修改前 (错误) ---
+          // this.download('node_manage/node_manage/download/' + id, ...
+
+          // --- 修改后 (正确，匹配后端 Controller) ---
+          this.download('node_mange/node_mange/download/' + id, {}, row.networkName + "_" + row.nodeName + ".zip");
+        }).catch(() => {});
     }
   }
 }
