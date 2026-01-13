@@ -5,66 +5,74 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Tinc 配置文件生成工具
+ * Tinc 配置文件生成工具 (修复版 - 强制 PEM 格式 + 自动填充 Subnet)
+ * @author Sun & Gemini Coach
  */
 public class TincConfigUtils {
 
     private static final Logger log = LoggerFactory.getLogger(TincConfigUtils.class);
 
+    // 智能路径选择：开发环境(Win)用 D盘，生产环境(Linux)用 /etc
     private static final String BASE_PATH = System.getProperty("os.name").toLowerCase().startsWith("win")
             ? "D:/tinc"
             : "/etc/tinc";
 
     /**
-     * 生成 tinc.conf
+     * 生成 tinc.conf (保持不变)
      */
     public static void createTincConf(String netName, String nodeName, String connectToNode) {
         StringBuilder sb = new StringBuilder();
         sb.append("Name = ").append(nodeName).append("\n");
-        sb.append("Interface = tinc").append("\n");
-        sb.append("ConnectTo = ").append(connectToNode).append("\n");
+        sb.append("Interface = tinc0").append("\n");
+        sb.append("ConnectTo = ").append(connectToNode).append("\n"); // Client 必须要连 Server
         sb.append("Mode = switch").append("\n");
 
         writeToFile(netName, "tinc.conf", sb.toString());
     }
 
     // ==========================================
-    // 核心修改：利用重载解决参数冲突
+    // 核心修复：生成标准 hosts 文件
     // ==========================================
 
     /**
-     * 版本 A (兼容旧代码): 只有 4 个参数
-     * 给普通的 Client 节点使用（不需要公网IP）
+     * 版本 A: Client 节点专用 (不需要 Address，但必须有 Subnet)
+     * 例如调用: createHostFile("segment", "sun666", "192.172.100.3/32", publicKey);
      */
     public static void createHostFile(String netName, String nodeName, String subnet, String publicKey) {
-        // 自动调用版本 B，把 publicIp 传为 null
+        // 自动调用版本 B，把 publicIp 传为 null，这样就不会生成 Address 字段
         createHostFile(netName, nodeName, subnet, null, publicKey);
     }
 
     /**
-     * 版本 B (新功能): 有 5 个参数
-     * 给 Server 节点使用（需要写入 Address 公网IP）
+     * 版本 B: 通用版 / Server 节点 (需要 Address 和 Subnet)
      */
     public static void createHostFile(String netName, String nodeName, String subnet, String publicIp, String publicKey) {
         StringBuilder sb = new StringBuilder();
 
-        // 只有当 publicIp 不为空时，才写入 Address 字段
+        // 1. [关键] 写入 Address (仅当 publicIp 存在时，如服务端)
         if (publicIp != null && !publicIp.isEmpty()) {
             sb.append("Address = ").append(publicIp).append("\n");
         }
 
+        // 2. [关键] 写入 Subnet (你刚才要求的字段，这里一定会写进去！)
+        // 例如: Subnet = 192.172.100.3/32
         sb.append("Subnet = ").append(subnet).append("\n");
-        sb.append("\n");
+
+        sb.append("\n"); // 空一行，保持美观
+
+        // 3. [关键] 写入公钥 (强制换行，修复 PEM 格式问题)
         sb.append("-----BEGIN RSA PUBLIC KEY-----\n");
-        sb.append(publicKey).append("\n");
+        sb.append(formatToMime(publicKey)); // <--- 这里的函数会负责切分换行
         sb.append("-----END RSA PUBLIC KEY-----\n");
 
         writeToFile(netName, "hosts/" + nodeName, sb.toString());
     }
-
-    // ==========================================
 
     /**
      * 生成私钥文件 (rsa_key.priv)
@@ -72,15 +80,53 @@ public class TincConfigUtils {
     public static void createPrivateKey(String netName, String privateKey) {
         StringBuilder sb = new StringBuilder();
         sb.append("-----BEGIN RSA PRIVATE KEY-----\n");
-        sb.append(privateKey).append("\n");
+        sb.append(formatToMime(privateKey));
         sb.append("-----END RSA PRIVATE KEY-----\n");
 
         writeToFile(netName, "rsa_key.priv", sb.toString());
     }
 
+    // ==========================================
+    // 新增：密钥对生成工具
+    // ==========================================
+
     /**
-     * 内部写文件方法
+     * 随机生成一对 RSA 密钥 (4096位)
      */
+    public static Map<String, String> generateKeyPair() {
+        try {
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+            keyGen.initialize(4096);
+            KeyPair pair = keyGen.generateKeyPair();
+
+            String privateKey = Base64.getEncoder().encodeToString(pair.getPrivate().getEncoded());
+            String publicKey = Base64.getEncoder().encodeToString(pair.getPublic().getEncoded());
+
+            Map<String, String> keys = new HashMap<>();
+            keys.put("private", privateKey);
+            keys.put("public", publicKey);
+            return keys;
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("生成密钥失败: " + e.getMessage());
+        }
+    }
+
+    // ==========================================
+    // 内部工具方法
+    // ==========================================
+
+    /**
+     * [关键] 将 Base64 字符串格式化为标准 MIME 格式 (每行64字符+\n)
+     */
+    private static String formatToMime(String rawBase64) {
+        if (rawBase64 == null) return "";
+        if (rawBase64.contains("BEGIN RSA")) return rawBase64;
+
+        byte[] decode = Base64.getDecoder().decode(rawBase64);
+        return Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(decode) + "\n";
+    }
+
     private static void writeToFile(String netName, String fileName, String content) {
         String fullPath = BASE_PATH + "/" + netName + "/" + fileName;
         File file = new File(fullPath);
@@ -99,37 +145,20 @@ public class TincConfigUtils {
         }
     }
 
-    // ==========================================
-    // 新增：读取文件功能 (为了获取 Server 的公钥)
-    // ==========================================
-
-    /**
-     * 读取指定节点的 hosts 文件内容
-     * @param netName 内网名称
-     * @param nodeName 节点名称 (例如 server_master)
-     * @return 文件内容字符串
-     */
     public static String readHostFile(String netName, String nodeName) {
         String fullPath = BASE_PATH + "/" + netName + "/hosts/" + nodeName;
         File file = new File(fullPath);
-
         if (!file.exists()) {
-            log.error("文件不存在: {}", fullPath);
-            throw new RuntimeException("找不到服务器公钥文件，请检查是否已初始化服务端！");
+            log.warn("文件不存在: {}", fullPath);
+            return null;
         }
-
         try {
-            // 简单暴力的读取方式 (Java 7+)
             return new String(java.nio.file.Files.readAllBytes(file.toPath()));
         } catch (IOException e) {
-            log.error("读取文件失败: {}", fullPath, e);
             throw new RuntimeException("读取配置文件失败");
         }
     }
 
-    /**
-     * 获取基础路径 (给 Zip 工具用)
-     */
     public static String getBasePath() {
         return BASE_PATH;
     }
