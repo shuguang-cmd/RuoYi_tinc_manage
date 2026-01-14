@@ -1,8 +1,8 @@
 <p align="center">
 	<img alt="logo" src="https://oscimg.oschina.net/oscnet/up-d3d0a9303e11d522a06cd263f3079027715.png">
 </p>
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">RuoYi v3.9.0</h1>
-<h4 align="center">基于SpringBoot+Vue前后端分离的Java快速开发框架</h4>
+<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">RuoYi v3.9.0 - Tinc内网集群管理系统</h1>
+<h4 align="center">基于SpringBoot+Vue前后端分离的Tinc内网集群管理平台</h4>
 <p align="center">
 	<a href="https://gitee.com/y_project/RuoYi-Vue/stargazers"><img src="https://gitee.com/y_project/RuoYi-Vue/badge/star.svg?theme=dark"></a>
 	<a href="https://gitee.com/y_project/RuoYi-Vue"><img src="https://img.shields.io/badge/RuoYi-v3.9.0-brightgreen.svg"></a>
@@ -11,85 +11,312 @@
 
 ## 平台简介
 
-若依是一套全部开源的快速开发平台，毫无保留给个人及企业免费使用。
+本系统是基于若依框架开发的Tinc内网集群管理平台，实现了服务器集群、Tinc网络集群、Tinc节点集群的统一管理。系统采用前后端分离架构，提供完整的用户权限管理、集群监控、节点配置等功能。
 
-* 前端采用Vue、Element UI。
-* 后端采用Spring Boot、Spring Security、Redis & Jwt。
-* 权限认证使用Jwt，支持多终端认证系统。
-* 支持加载动态权限菜单，多方式轻松权限控制。
-* 高效率开发，使用代码生成器可以一键生成前后端代码。
-* 提供了技术栈（[Vue3](https://v3.cn.vuejs.org) [Element Plus](https://element-plus.org/zh-CN) [Vite](https://cn.vitejs.dev)）版本[RuoYi-Vue3](https://gitcode.com/yangzongzhuan/RuoYi-Vue3)，保持同步更新。
-* 提供了单应用版本[RuoYi-Vue-fast](https://gitcode.com/yangzongzhuan/RuoYi-Vue-fast)，Oracle版本[RuoYi-Vue-Oracle](https://gitcode.com/yangzongzhuan/RuoYi-Vue-Oracle)，保持同步更新。
-* 不分离版本，请移步[RuoYi](https://gitee.com/y_project/RuoYi)，微服务版本，请移步[RuoYi-Cloud](https://gitee.com/y_project/RuoYi-Cloud)
-* 阿里云折扣场：[点我进入](http://aly.ruoyi.vip)，腾讯云秒杀场：[点我进入](http://txy.ruoyi.vip)&nbsp;&nbsp;
+### 技术架构
 
-## 内置功能
+**后端技术栈**
+- Spring Boot 2.5.15 - 基础框架
+- Spring Security 5.7.14 - 安全框架
+- MyBatis - 持久层框架
+- Redis - 缓存
+- JWT - 权限认证
+- Druid - 数据库连接池
+- Swagger 3.0.0 - API文档
+- FastJSON 2.0.60 - JSON处理
+- POI 4.1.2 - Excel导入导出
+- PageHelper 1.4.7 - 分页插件
 
-1.  用户管理：用户是系统操作者，该功能主要完成系统用户配置。
-2.  部门管理：配置系统组织机构（公司、部门、小组），树结构展现支持数据权限。
-3.  岗位管理：配置系统用户所属担任职务。
-4.  菜单管理：配置系统菜单，操作权限，按钮权限标识等。
-5.  角色管理：角色菜单权限分配、设置角色按机构进行数据范围权限划分。
-6.  字典管理：对系统中经常使用的一些较为固定的数据进行维护。
-7.  参数管理：对系统动态配置常用参数。
-8.  通知公告：系统通知公告信息发布维护。
-9.  操作日志：系统正常操作日志记录和查询；系统异常信息日志记录和查询。
-10. 登录日志：系统登录日志记录查询包含登录异常。
-11. 在线用户：当前系统中活跃用户状态监控。
-12. 定时任务：在线（添加、修改、删除)任务调度包含执行结果日志。
-13. 代码生成：前后端代码的生成（java、html、xml、sql）支持CRUD下载 。
-14. 系统接口：根据业务代码自动生成相关的api接口文档。
-15. 服务监控：监视当前系统CPU、内存、磁盘、堆栈等相关信息。
-16. 缓存监控：对系统的缓存信息查询，命令统计等。
-17. 在线构建器：拖动表单元素生成相应的HTML代码。
-18. 连接池监视：监视当前系统数据库连接池状态，可进行分析SQL找出系统性能瓶颈。
+**前端技术栈**
+- Vue 2.x - 前端框架
+- Element UI - UI组件库
+- Axios - HTTP请求
+- Vuex - 状态管理
+- Vue Router - 路由管理
+
+## 核心功能模块
+
+### 1. 服务器集群管理 (MangeServerController)
+- 服务器信息管理（服务器名称、IP地址）
+- 网段配置管理（起始网段、终止网段）
+- 端口范围配置（起始端口、终止端口）
+- 内网数量统计
+- 服务器状态监控
+- Excel数据导入导出
+
+**API接口**
+- `GET /manger/mangeServer/list` - 查询服务器集群列表
+- `GET /manger/mangeServer/{Id}` - 获取服务器详细信息
+- `POST /manger/mangeServer` - 新增服务器
+- `PUT /manger/mangeServer` - 修改服务器信息
+- `DELETE /manger/mangeServer/{Ids}` - 删除服务器
+- `POST /manger/mangeServer/export` - 导出服务器数据
+
+### 2. Tinc内网集群管理 (TincNetworkMangeController)
+- Tinc网络集群创建与管理
+- 内网名称与网段配置
+- 节点数量统计
+- 内网状态监控
+- 用户权限关联（rootName自动填充当前登录用户）
+- Excel数据导入导出
+
+**API接口**
+- `GET /TincNetworkMange/TincNetworkMange/list` - 查询Tinc网络集群列表
+- `GET /TincNetworkMange/TincNetworkMange/{id}` - 获取网络集群详细信息
+- `POST /TincNetworkMange/TincNetworkMange` - 新增网络集群
+- `PUT /TincNetworkMange/TincNetworkMange` - 修改网络集群
+- `DELETE /TincNetworkMange/TincNetworkMange/{ids}` - 删除网络集群
+- `POST /TincNetworkMange/TincNetworkMange/export` - 导出网络集群数据
+
+### 3. Tinc节点集群管理 (TincNodeMangeController)
+- Tinc节点信息管理
+- 节点配置（节点名称、内网IP、密码）
+- 设备ID管理
+- 节点状态监控
+- 配置状态管理
+- 客户端安装包下载（自动打包配置文件）
+- Excel数据导入导出
+
+**API接口**
+- `GET /node_mange/node_mange/list` - 查询节点列表
+- `GET /node_mange/node_mange/{id}` - 获取节点详细信息
+- `POST /node_mange/node_mange` - 新增节点
+- `PUT /node_mange/node_mange` - 修改节点信息
+- `DELETE /node_mange/node_mange/{ids}` - 删除节点
+- `POST /node_mange/node_mange/download/{id}` - 下载客户端安装包
+- `POST /node_mange/node_mange/export` - 导出节点数据
+
+### 4. 系统管理模块
+- **用户管理**：系统用户配置、角色分配
+- **角色管理**：角色菜单权限分配、数据权限控制
+- **菜单管理**：系统菜单配置、操作权限、按钮权限
+- **部门管理**：组织机构配置、树结构展现
+- **岗位管理**：用户职务配置
+- **字典管理**：系统字典数据维护
+- **参数管理**：系统动态参数配置
+- **通知公告**：系统通知发布维护
+
+### 5. 系统监控模块
+- **在线用户**：当前活跃用户状态监控
+- **登录日志**：系统登录日志记录查询
+- **操作日志**：系统操作日志记录查询
+- **服务监控**：CPU、内存、磁盘、堆栈等信息监控
+- **缓存监控**：Redis缓存信息查询、命令统计
+- **连接池监视**：数据库连接池状态监控
+
+### 6. 系统工具模块
+- **代码生成**：前后端代码生成（Java、HTML、XML、SQL）
+- **系统接口**：自动生成API接口文档
+- **定时任务**：在线任务调度管理
+
+## 项目结构
+
+```
+RuoYi-Vue-master
+├── ruoyi-admin              # 后端主模块
+│   └── src/main/java/com/ruoyi/web/controller
+│       ├── common           # 公共控制器
+│       │   ├── CaptchaController.java
+│       │   └── CommonController.java
+│       ├── monitor          # 监控控制器
+│       │   ├── CacheController.java
+│       │   ├── ServerController.java
+│       │   ├── SysLogininforController.java
+│       │   ├── SysOperlogController.java
+│       │   └── SysUserOnlineController.java
+│       ├── system           # 系统管理控制器
+│       │   ├── SysConfigController.java
+│       │   ├── SysDeptController.java
+│       │   ├── SysDictDataController.java
+│       │   ├── SysDictTypeController.java
+│       │   ├── SysIndexController.java
+│       │   ├── SysLoginController.java
+│       │   ├── SysMenuController.java
+│       │   ├── SysNoticeController.java
+│       │   ├── SysPostController.java
+│       │   ├── SysProfileController.java
+│       │   ├── SysRegisterController.java
+│       │   ├── SysRoleController.java
+│       │   └── SysUserController.java
+│       ├── tool             # 工具控制器
+│       │   └── TestController.java
+│       ├── MangeServerController.java          # 服务器集群管理
+│       ├── TincNetworkMangeController.java    # Tinc网络集群管理
+│       └── TincNodeMangeController.java       # Tinc节点集群管理
+├── ruoyi-system             # 系统服务模块
+│   └── src/main/java/com/ruoyi
+│       ├── manger           # 服务器集群服务
+│       │   ├── domain/MangeServer.java
+│       │   ├── mapper/MangeServerMapper.java
+│       │   └── service/IMangeServerService.java
+│       ├── TincNetworkMange # Tinc网络集群服务
+│       │   ├── domain/TincNetworkMange.java
+│       │   ├── mapper/TincNetworkMangeMapper.java
+│       │   └── service/ITincNetworkMangeService.java
+│       ├── node_manage      # Tinc节点集群服务
+│       │   ├── domain/TincNodeMange.java
+│       │   ├── mapper/TincNodeMangeMapper.java
+│       │   └── service/ITincNodeMangeService.java
+│       └── system           # 系统基础服务
+├── ruoyi-common             # 公共模块
+│   ├── annotation           # 自定义注解
+│   ├── config               # 系统配置
+│   ├── constant             # 常量定义
+│   ├── core                 # 核心类
+│   ├── enums                # 枚举类型
+│   ├── exception            # 异常处理
+│   ├── filter               # 过滤器
+│   └── utils                # 工具类
+├── ruoyi-framework          # 框架核心模块
+│   ├── aspectj              # AOP切面
+│   ├── config               # 配置类
+│   ├── datasource           # 数据源配置
+│   ├── interceptor          # 拦截器
+│   ├── manager              # 异步管理
+│   ├── security             # 安全配置
+│   └── web                  # Web配置
+├── ruoyi-generator          # 代码生成模块
+├── ruoyi-quartz             # 定时任务模块
+└── ruoyi-ui                 # 前端Vue项目
+    ├── src
+    │   ├── api              # API接口
+    │   │   ├── TincNetworkMange/TincNetworkMange.js
+    │   │   ├── manger/manger.js
+    │   │   ├── node_mange/node_mange.js
+    │   │   ├── monitor/     # 监控API
+    │   │   ├── system/      # 系统管理API
+    │   │   └── user/user.js
+    │   ├── assets           # 静态资源
+    │   ├── components       # 公共组件
+    │   ├── directive        # 自定义指令
+    │   ├── layout           # 布局组件
+    │   ├── plugins          # 插件
+    │   ├── router           # 路由配置
+    │   ├── store            # Vuex状态管理
+    │   ├── utils            # 工具函数
+    │   └── views            # 页面视图
+    │       ├── TincNetworkMange/TincNetworkMange/index.vue
+    │       ├── manger/manger/index.vue
+    │       ├── node_mange/node_mange/index.vue
+    │       ├── monitor/     # 监控页面
+    │       ├── system/      # 系统管理页面
+    │       └── dashboard/   # 仪表板
+    └── package.json
+```
+
+## 快速开始
+
+### 环境要求
+- JDK 1.8+
+- Node.js 12+
+- MySQL 5.7+
+- Redis 3.0+
+- Maven 3.6+
+
+### 后端启动
+```bash
+# 1. 导入数据库
+# 执行 model_SQL 目录下的SQL文件
+
+# 2. 修改配置文件
+# 编辑 ruoyi-admin/src/main/resources/application.yml
+# 配置数据库、Redis连接信息
+
+# 3. 编译打包
+cd ruoyi-admin
+mvn clean package
+
+# 4. 启动应用
+java -jar target/ruoyi-admin.jar
+```
+
+### 前端启动
+```bash
+# 1. 安装依赖
+cd ruoyi-ui
+npm install
+
+# 2. 启动开发服务器
+npm run dev
+
+# 3. 访问系统
+# 浏览器打开 http://localhost:80
+```
+
+### 默认账号
+- 用户名：admin
+- 密码：admin123
+
+## 核心特性
+
+### 1. 权限管理
+- 基于RBAC的权限控制模型
+- 支持菜单权限、按钮权限、数据权限
+- 支持多终端认证（JWT）
+- 动态权限菜单加载
+
+### 2. 集群管理
+- 服务器集群统一管理
+- Tinc网络集群创建与配置
+- Tinc节点自动配置与部署
+- 客户端安装包一键生成下载
+
+### 3. 监控告警
+- 实时服务器状态监控
+- 在线用户状态跟踪
+- 操作日志与登录日志记录
+- 缓存与连接池状态监控
+
+### 4. 开发效率
+- 代码生成器一键生成前后端代码
+- Swagger自动生成API文档
+- 支持Excel数据导入导出
+- 完善的异常处理机制
+
+### 5. 安全防护
+- XSS攻击防护
+- SQL注入防护
+- CSRF防护
+- 密码加密存储
+- 接口防重复提交
+- 接口限流
 
 ## 在线体验
-
-- admin/admin123  
-- 陆陆续续收到一些打赏，为了更好的体验已用于演示服务器升级。谢谢各位小伙伴。
 
 演示地址：http://vue.ruoyi.vip  
 文档地址：http://doc.ruoyi.vip
 
-## 演示图
+## 常见问题
 
-<table>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/cd1f90be5f2684f4560c9519c0f2a232ee8.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/1cbcf0e6f257c7d3a063c0e3f2ff989e4b3.jpg"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-8074972883b5ba0622e13246738ebba237a.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-9f88719cdfca9af2e58b352a20e23d43b12.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-39bf2584ec3a529b0d5a3b70d15c9b37646.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-936ec82d1f4872e1bc980927654b6007307.png"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-b2d62ceb95d2dd9b3fbe157bb70d26001e9.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-d67451d308b7a79ad6819723396f7c3d77a.png"/></td>
-    </tr>	 
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/5e8c387724954459291aafd5eb52b456f53.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/644e78da53c2e92a95dfda4f76e6d117c4b.jpg"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-8370a0d02977eebf6dbf854c8450293c937.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-49003ed83f60f633e7153609a53a2b644f7.png"/></td>
-    </tr>
-	<tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-d4fe726319ece268d4746602c39cffc0621.png"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-c195234bbcd30be6927f037a6755e6ab69c.png"/></td>
-    </tr>
-    <tr>
-        <td><img src="https://oscimg.oschina.net/oscnet/b6115bc8c31de52951982e509930b20684a.jpg"/></td>
-        <td><img src="https://oscimg.oschina.net/oscnet/up-5e4daac0bb59612c5038448acbcef235e3a.png"/></td>
-    </tr>
-</table>
+### 1. 客户端安装包下载失败
+- 检查TincConfigUtils配置的base路径是否正确
+- 确认节点配置已生成对应的zip文件
+- 检查文件权限
 
+### 2. 网段配置验证失败
+- 网段格式应为xxx.xxx.xxx或xxx.xxx
+- IP地址格式应为xxx.xxx.xxx.xxx
+- 确保起始网段小于终止网段
 
-## 若依前后端分离交流群
+### 3. 节点连接失败
+- 检查服务器IP和端口配置是否正确
+- 确认Tinc服务已启动
+- 检查防火墙设置
 
-QQ群： [![加入QQ群](https://img.shields.io/badge/已满-937441-blue.svg)](https://jq.qq.com/?_wv=1027&k=5bVB1og) [![加入QQ群](https://img.shields.io/badge/已满-887144332-blue.svg)](https://jq.qq.com/?_wv=1027&k=5eiA4DH) [![加入QQ群](https://img.shields.io/badge/已满-180251782-blue.svg)](https://jq.qq.com/?_wv=1027&k=5AxMKlC) [![加入QQ群](https://img.shields.io/badge/已满-104180207-blue.svg)](https://jq.qq.com/?_wv=1027&k=51G72yr) [![加入QQ群](https://img.shields.io/badge/已满-186866453-blue.svg)](https://jq.qq.com/?_wv=1027&k=VvjN2nvu) [![加入QQ群](https://img.shields.io/badge/已满-201396349-blue.svg)](https://jq.qq.com/?_wv=1027&k=5vYAqA05) [![加入QQ群](https://img.shields.io/badge/已满-101456076-blue.svg)](https://jq.qq.com/?_wv=1027&k=kOIINEb5) [![加入QQ群](https://img.shields.io/badge/已满-101539465-blue.svg)](https://jq.qq.com/?_wv=1027&k=UKtX5jhs) [![加入QQ群](https://img.shields.io/badge/已满-264312783-blue.svg)](https://jq.qq.com/?_wv=1027&k=EI9an8lJ) [![加入QQ群](https://img.shields.io/badge/已满-167385320-blue.svg)](https://jq.qq.com/?_wv=1027&k=SWCtLnMz) [![加入QQ群](https://img.shields.io/badge/已满-104748341-blue.svg)](https://jq.qq.com/?_wv=1027&k=96Dkdq0k) [![加入QQ群](https://img.shields.io/badge/已满-160110482-blue.svg)](https://jq.qq.com/?_wv=1027&k=0fsNiYZt) [![加入QQ群](https://img.shields.io/badge/已满-170801498-blue.svg)](https://jq.qq.com/?_wv=1027&k=7xw4xUG1) [![加入QQ群](https://img.shields.io/badge/已满-108482800-blue.svg)](https://jq.qq.com/?_wv=1027&k=eCx8eyoJ) [![加入QQ群](https://img.shields.io/badge/已满-101046199-blue.svg)](https://jq.qq.com/?_wv=1027&k=SpyH2875) [![加入QQ群](https://img.shields.io/badge/已满-136919097-blue.svg)](https://jq.qq.com/?_wv=1027&k=tKEt51dz) [![加入QQ群](https://img.shields.io/badge/已满-143961921-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=0vBbSb0ztbBgVtn3kJS-Q4HUNYwip89G&authKey=8irq5PhutrZmWIvsUsklBxhj57l%2F1nOZqjzigkXZVoZE451GG4JHPOqW7AW6cf0T&noverify=0&group_code=143961921) [![加入QQ群](https://img.shields.io/badge/已满-174951577-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=ZFAPAbp09S2ltvwrJzp7wGlbopsc0rwi&authKey=HB2cxpxP2yspk%2Bo3WKTBfktRCccVkU26cgi5B16u0KcAYrVu7sBaE7XSEqmMdFQp&noverify=0&group_code=174951577) [![加入QQ群](https://img.shields.io/badge/已满-161281055-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Fn2aF5IHpwsy8j6VlalNJK6qbwFLFHat&authKey=uyIT%2B97x2AXj3odyXpsSpVaPMC%2Bidw0LxG5MAtEqlrcBcWJUA%2FeS43rsF1Tg7IRJ&noverify=0&group_code=161281055) [![加入QQ群](https://img.shields.io/badge/已满-138988063-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=XIzkm_mV2xTsUtFxo63bmicYoDBA6Ifm&authKey=dDW%2F4qsmw3x9govoZY9w%2FoWAoC4wbHqGal%2BbqLzoS6VBarU8EBptIgPKN%2FviyC8j&noverify=0&group_code=138988063) [![加入QQ群](https://img.shields.io/badge/已满-151450850-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=DkugnCg68PevlycJSKSwjhFqfIgrWWwR&authKey=pR1Pa5lPIeGF%2FFtIk6d%2FGB5qFi0EdvyErtpQXULzo03zbhopBHLWcuqdpwY241R%2F&noverify=0&group_code=151450850) [![加入QQ群](https://img.shields.io/badge/已满-224622315-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=F58bgRa-Dp-rsQJThiJqIYv8t4-lWfXh&authKey=UmUs4CVG5OPA1whvsa4uSespOvyd8%2FAr9olEGaWAfdLmfKQk%2FVBp2YU3u2xXXt76&noverify=0&group_code=224622315) [![加入QQ群](https://img.shields.io/badge/已满-287842588-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Nxb2EQ5qozWa218Wbs7zgBnjLSNk_tVT&authKey=obBKXj6SBKgrFTJZx0AqQnIYbNOvBB2kmgwWvGhzxR67RoRr84%2Bus5OadzMcdJl5&noverify=0&group_code=287842588) [![加入QQ群](https://img.shields.io/badge/已满-187944233-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=numtK1M_I4eVd2Gvg8qtbuL8JgX42qNh&authKey=giV9XWMaFZTY%2FqPlmWbkB9g3fi0Ev5CwEtT9Tgei0oUlFFCQLDp4ozWRiVIzubIm&noverify=0&group_code=187944233) [![加入QQ群](https://img.shields.io/badge/已满-228578329-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=G6r5KGCaa3pqdbUSXNIgYloyb8e0_L0D&authKey=4w8tF1eGW7%2FedWn%2FHAypQksdrML%2BDHolQSx7094Agm7Luakj9EbfPnSTxSi2T1LQ&noverify=0&group_code=228578329) [![加入QQ群](https://img.shields.io/badge/已满-191164766-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=GsOo-OLz53J8y_9TPoO6XXSGNRTgbFxA&authKey=R7Uy%2Feq%2BZsoKNqHvRKhiXpypW7DAogoWapOawUGHokJSBIBIre2%2FoiAZeZBSLuBc&noverify=0&group_code=191164766) [![加入QQ群](https://img.shields.io/badge/174569686-blue.svg)](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=PmYavuzsOthVqfdAPbo4uAeIbu7Ttjgc&authKey=p52l8%2FXa4PS1JcEmS3VccKSwOPJUZ1ZfQ69MEKzbrooNUljRtlKjvsXf04bxNp3G&noverify=0&group_code=174569686) 点击按钮入群。
+## 技术支持
+
+- 官方文档：http://doc.ruoyi.vip
+- 演示地址：http://vue.ruoyi.vip
+- 若依前后端分离交流群：详见README底部
+
+## 许可证
+
+本项目基于 Apache 2.0 许可证开源，详见 [LICENSE](LICENSE) 文件。
+
+## 致谢
+
+感谢若依开源项目提供的优秀框架基础。
+
+---
+
+**注意**：本系统在若依框架基础上扩展了Tinc内网集群管理功能，适用于企业内网VPN集群管理场景。使用前请确保已了解Tinc VPN的基本原理和配置方法。
