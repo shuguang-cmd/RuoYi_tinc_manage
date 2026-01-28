@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.ruoyi.common.utils.DateUtils;
+import com.ruoyi.common.utils.RsaUtils;
 import com.ruoyi.common.utils.ShellUtils;      // 必须引入我们写的 Shell 工具
 import com.ruoyi.common.utils.TincConfigUtils; // 必须引入我们写的 Config 工具
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,55 +49,67 @@ public class TincNetworkMangeServiceImpl implements ITincNetworkMangeService
      * 新增Tinc内网集群管理 (核心改造)
      * 对应 PHP Netmanagement::add
      */
+    // 在 TincNetworkMangeServiceImpl.java 中替换原有的 insert 方法
     @Override
-    @Transactional(rollbackFor = Exception.class) // 开启事务：任何报错都会回滚数据库
+    @Transactional(rollbackFor = Exception.class)
     public int insertTincNetworkMange(TincNetworkMange network)
     {
-        // 1. 业务校验：检查端口和网段是否被占用
-        // (需要在 Mapper 中补充这两个查询方法，稍后我会给你 SQL)
-        if (tincNetworkMangeMapper.checkPortUnique(network.getPort()) > 0) {
-            throw new RuntimeException("操作失败：端口 " + network.getPort() + " 已被占用");
-        }
-        if (tincNetworkMangeMapper.checkSegmentUnique(network.getSegment()) > 0) {
-            throw new RuntimeException("操作失败：网段 " + network.getSegment() + " 已被占用");
-        }
-
-        // 2. 设置基础数据
+        // 1. 设置基础信息并入库
         network.setCreateTime(DateUtils.getNowDate());
-        network.setNetworkStatus("正常运行中"); // 默认状态
-
-        // 3. 先入库 (获取 ID)
+        network.setNetworkStatus("正常运行中");
         int rows = tincNetworkMangeMapper.insertTincNetworkMange(network);
 
-        // 4. 执行 Linux 底层操作
+        // 2. [新增] 立即生成服务端文件到 D 盘
         try {
             String netName = network.getNetworkName();
 
-            // --- NEW: 生成真实的 RSA 密钥 ---
-            Map<String, String> keyMap = com.ruoyi.common.utils.RsaUtils.generateKeys();
-            String publicKey = keyMap.get("publicKey");
-            String privateKey = keyMap.get("privateKey");
-            // -----------------------------
+            // =========================================================
+            // 🔍 关键步骤：根据你选的“服务器名字”去查它的“真实IP”
+            // =========================================================
 
-            // A. 生成 tinc.conf (保持不变)
+            // 1. 获取你在下拉框里选的名字 (比如 "Tinc_Test")
+            String selectedServerName = network.getServerName();
+            // 注意：请确认你的实体类里字段名是 getAccessServer() 还是 getAccessServerName()
+
+            if (selectedServerName == null || selectedServerName.isEmpty()) {
+                throw new RuntimeException("请选择接入服务器！");
+            }
+
+            // 2. 去服务器表里查这个名字对应的记录
+            MangeServer query = new MangeServer();
+            query.setServerName(selectedServerName); // 假设 MangeServer 实体类用 setServerName 查询
+            List<MangeServer> serverList = mangeServerService.selectMangeServerList(query);
+
+            if (serverList == null || serverList.isEmpty()) {
+                throw new RuntimeException("系统里找不到名为 [" + selectedServerName + "] 的服务器，请检查服务器集群管理！");
+            }
+
+            // 3. 拿到真实的公网 IP
+            String realPublicIp = serverList.get(0).getServerIp();
+            // =========================================================
+
+            // A. 初始化目录
+            TincConfigUtils.initNetworkEnv(netName);
+
+            // B. 生成 4096位 密钥
+            Map<String, String> keyMap = RsaUtils.generateKeys();
+
+            // C. 生成配置 (server_master)
             TincConfigUtils.createTincConf(netName, "server_master", "");
 
-            // B. 生成服务端 Host 文件 (填入真实的 publicKey)
-            // 注意：这里需要把生成的公钥传进去
-            String Segment = network.getSegment()+".1/32"; //(xxx.xxx.xxx.xxx/32)
-            TincConfigUtils.createHostFile(netName, "server_master", Segment, "", publicKey);
+            // D. 生成 Host 文件 (使用刚才查出来的 realPublicIp)
+            // 这里的 subnet 是你填的网段 (比如 192.168.103) + .1/32
+            String subnet = network.getSegment() + ".1/32";
 
-            // C. 保存私钥到本地 (rsa_key.priv)
-            // 我们需要在 TincConfigUtils 里补一个生成私钥的方法，或者直接在这里写
-            // 简单起见，我们假设 TincConfigUtils 增加了一个 createPrivateKey 方法
-            TincConfigUtils.createPrivateKey(netName, privateKey);
+            // 👇 这里填入真实的 IP
+            TincConfigUtils.createHostFile(netName, "server_master", subnet, realPublicIp, keyMap.get("publicKey"));
 
-            // D. 启动服务 (保持不变)
-            String startCmd = "systemctl start tinc@" + netName;
-            ShellUtils.runCommand(startCmd);
+            // E. 生成私钥
+            TincConfigUtils.createPrivateKey(netName, keyMap.get("privateKey"));
 
         } catch (Exception e) {
-            // ... 异常处理保持不变 ...
+            // 手动回滚：如果文件生成失败，把刚才插入数据库的那条记录也删了，保证数据一致性
+            throw new RuntimeException("内网初始化失败: " + e.getMessage());
         }
 
         return rows;

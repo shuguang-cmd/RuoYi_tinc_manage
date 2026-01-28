@@ -67,9 +67,10 @@ public class TincConfigUtils {
         sb.append("\n"); // 空一行，保持美观
 
         // 3. [关键] 写入公钥 (强制换行，修复 PEM 格式问题)
-        sb.append("-----BEGIN RSA PUBLIC KEY-----\n");
+        // Java 默认生成 PKCS#8 格式，标准头应该是 BEGIN PRIVATE KEY 而不是tinc的-----BEGIN RSA PUBLIC KEY-----
+        sb.append("-----BEGIN  PUBLIC KEY-----\n");
         sb.append(formatToMime(publicKey)); // <--- 这里的函数会负责切分换行
-        sb.append("-----END RSA PUBLIC KEY-----\n");
+        sb.append("-----END  PUBLIC KEY-----\n");
 
         writeToFile(netName, "hosts/" + nodeName, sb.toString());
     }
@@ -79,9 +80,10 @@ public class TincConfigUtils {
      */
     public static void createPrivateKey(String netName, String privateKey) {
         StringBuilder sb = new StringBuilder();
-        sb.append("-----BEGIN RSA PRIVATE KEY-----\n");
+        // Java 默认生成 PKCS#8 格式，标准头应该是 BEGIN PRIVATE KEY 而不是tinc的-----BEGIN RSA PUBLIC KEY-----
+        sb.append("-----BEGIN  PRIVATE KEY-----\n");
         sb.append(formatToMime(privateKey));
-        sb.append("-----END RSA PRIVATE KEY-----\n");
+        sb.append("-----END  PRIVATE KEY-----\n");
 
         writeToFile(netName, "rsa_key.priv", sb.toString());
     }
@@ -161,5 +163,15 @@ public class TincConfigUtils {
 
     public static String getBasePath() {
         return BASE_PATH;
+    }
+    // 在 TincConfigUtils.java 中添加这个方法
+    public static void initNetworkEnv(String netName) {
+        // 自动判断系统路径
+        String basePath = (System.getProperty("os.name").toLowerCase().startsWith("win") ? "D:/tinc" : "/etc/tinc") + "/" + netName;
+
+        // 创建 3 个关键目录
+        new File(basePath).mkdirs();          // 根目录
+        new File(basePath + "/hosts").mkdirs();   // 公钥池
+        new File(basePath + "/clients").mkdirs(); // 打包临时仓
     }
 }

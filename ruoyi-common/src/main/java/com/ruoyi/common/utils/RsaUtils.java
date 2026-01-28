@@ -22,7 +22,7 @@ public class RsaUtils {
         try {
             // 1. 初始化 RSA 生成器 (Tinc 标准通常用 2048 或 4096 位)
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-            keyGen.initialize(2048);
+            keyGen.initialize(4096);
             KeyPair pair = keyGen.generateKeyPair();
 
             // 2. 获取密钥
