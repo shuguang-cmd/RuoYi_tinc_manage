@@ -98,6 +98,9 @@ public class LegacyTincController {
             result.put("net_name", network.getNetworkName());
             result.put("msg", "登录成功");
 
+            // 👇👇👇 加上这极其关键的一行！把数据库里的虚拟 IP 传给客户端！
+            result.put("node_ip", node.getnetworkIp());
+
             log.info("登录成功，用户: {}, 网络: {}", username, network.getNetworkName());
         } catch (Exception e) {
             log.error("登录接口异常", e);
