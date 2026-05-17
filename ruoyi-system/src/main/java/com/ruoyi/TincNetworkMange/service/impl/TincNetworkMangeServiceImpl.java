@@ -97,6 +97,10 @@ public class TincNetworkMangeServiceImpl implements ITincNetworkMangeService
             // C. 生成配置 (server_master)
             TincConfigUtils.createTincConf(netName, "server_master", "");
 
+            // 【新增这一行】：自动生成并提权 tinc-up 和 tinc-down
+            // 这里的 IP 必须是 .1，比如 10.1.11.1
+            TincConfigUtils.createTincUpAndDown(netName, network.getSegment() + ".1");
+
             // D. 生成 Host 文件 (使用刚才查出来的 realPublicIp)
             // 这里的 subnet 是你填的网段 (比如 192.168.103) + .1/32
             String subnet = network.getSegment() + ".1/32";
@@ -140,39 +144,19 @@ public class TincNetworkMangeServiceImpl implements ITincNetworkMangeService
                 throw new RuntimeException("找不到服务器原配置文件，无法提取原有公钥！");
             }
 
-            // B. 【核心步骤】从老文件内容中把原有的公钥提取出来，保证公钥不发生变更
-            // B. 【核心步骤】从老文件中提取纯净的 Base64 公钥（强行剥离破折号头尾和换行符）
+            // B. 【核心步骤】使用正则精准提取完整的公钥块（连头带尾完整剥离，保留 RSA 标识和换行）
             String publicKey = "";
-            if (oldHostContent.contains("-----BEGIN")) {
-                String[] lines = oldHostContent.split("\n");
-                StringBuilder keyBuilder = new StringBuilder();
-                boolean inKeyBlock = false;
+            // (?s) 代表单行模式，让 . 能够匹配包括换行符在内的所有字符
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(?s)-----BEGIN.*?-----END[^-]+-----");
+            java.util.regex.Matcher matcher = pattern.matcher(oldHostContent);
 
-                for (String line : lines) {
-                    // 如果遇到头部，开启采集模式，但跳过头部本身
-                    if (line.contains("-----BEGIN")) {
-                        inKeyBlock = true;
-                        continue;
-                    }
-                    // 如果遇到尾部，立刻停止采集
-                    if (line.contains("-----END")) {
-                        break;
-                    }
-                    // 如果在采集区内，把每行的公钥拼接起来（剔除空格和回车）
-                    if (inKeyBlock) {
-                        keyBuilder.append(line.trim());
-                    }
-                }
-                publicKey = keyBuilder.toString();
-
-                if (publicKey.isEmpty()) {
-                    throw new RuntimeException("提取到的公钥为空，请检查原文件格式！");
-                }
+            if (matcher.find()) {
+                publicKey = matcher.group(0); // 完美拿到自带标准头尾的完整公钥字符串
             } else {
-                throw new RuntimeException("原配置文件中没有找到 -----BEGIN 头，无法安全提取！");
+                throw new RuntimeException("原配置文件中没有找到标准的公钥 PEM 块，提取失败！");
             }
 
-            // C. 获取最新的接入服务器公网 IP（防止用户在修改时连带着把“接入服务器”也改了）
+            // C. 获取最新的接入服务器公网 IP
             String currentServerName = tincNetworkMange.getServerName();
             if (currentServerName == null || currentServerName.isEmpty()) {
                 currentServerName = oldNetwork.getServerName();
@@ -194,11 +178,13 @@ public class TincNetworkMangeServiceImpl implements ITincNetworkMangeService
             String newSubnet = newSegment + ".1/32";
 
             // E. 重新调用你写好的 createHostFile 工具类，用“新Subnet+新IP+老公钥”直接覆盖老文件
-            // 注意：如果你的工具类接收的 publicKey 参数会自动包裹头尾，请确保传入的字符串符合它内部的规则
             TincConfigUtils.createHostFile(netName, "server_master", newSubnet, realPublicIp, publicKey);
 
+            // F. 【重要补充！】既然网段变了，必须强行重写服务器的网卡启停脚本，让它绑定新的 .1 IP！
+            TincConfigUtils.createTincUpAndDown(netName, newSegment + ".1");
+
         } catch (Exception e) {
-            // 事务控制：文件要是改乱了或者抛异常了，直接回滚数据库，不骗人
+            // 事务控制：文件要是改乱了或者抛异常了，直接回滚数据库
             throw new RuntimeException("同步修改Tinc配置文件失败: " + e.getMessage());
         }
 
